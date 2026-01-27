@@ -1,0 +1,43 @@
+pipeline: train_encoder_decoder #  train_encoder_decoder/test_encoder_decoder
+seed: 2025
+device: cuda:0
+
+data_config:
+  pdb_data_dir: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rl_pdbs # path to your rna pdbs
+  train_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_train_data.csv # path to your train metadata
+  valid_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_valid_data.csv # path to your valid metadata
+  test_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_test_data.csv # path to your test metadata
+  graph_featurizer:
+    num_posenc: 16
+    num_rbf: 16
+    knn_num: 10
+
+model_config:
+  llm_config:
+    name: 'rnafm'
+    model_path: llm_ckpts/rnafm
+    embed_channel: 640
+  encoder:
+    name: 'mlp'
+    config:
+      input_dim: 640
+      hidden_dims:
+      - 8
+      dropout: 0.1
+  decoder:
+    name: 'mlp'
+    config:
+      n_classes: 4
+      encoder_hidden_dim: 8
+      mlp_num_layers: 3
+      mlp_dropout_p: 0.1
+      add_sigmoid: False
+
+train_config:
+  batch_size: 1
+  lr: 0.0001
+  max_train_epochs: 100
+  gradient_accumulate_every: 16
+  patience: 10
+  output_dir: results/sold_encoder_decoder/    # path to your experiment dir
+  ckpt_path: results/sold_encoder_decoder/rnafm_encoder_mlp_decoder_mlp_compress_dim_8/model_separate_epoch_21.pt # use this checkpoint when use test_encoder_decoder pipeline, during train you can set None

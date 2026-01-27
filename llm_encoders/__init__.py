@@ -1,0 +1,2 @@
+from .rnafm import RnaFMEmbeddingExtractor
+from .rinalmo import RiNALMoEmbeddingExtractor

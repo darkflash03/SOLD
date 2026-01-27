@@ -1,0 +1,82 @@
+pipeline: 'train_latent_diffusion' # train_latent_diffusion/test_latent_diffusion/sample_latent_diffusion
+seed: 2025
+device: cuda:0
+
+data_config:
+  pdb_data_dir: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rl_pdbs # path to your rna pdbs
+  train_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_train_data.csv # path to your train metadata
+  valid_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_valid_data.csv # path to your valid metadata
+  test_data_path: /cpfs01/projects-HDD/cfff-c7cd658afc74_HDD/cfff_siqi/LatentDiffusion/DiffusionRL/example_data/rsda_test_data.csv # path to your test metadata
+  graph_featurizer:
+    num_posenc: 16
+    num_rbf: 16
+    knn_num: 10
+  #是否需要压缩encoder, 如果是未经过压缩的embedding则无下面的配置
+  latent_compressed:
+    model_path: 'results/fixed_encoder_decoder/model_separate_epoch_49.pt'
+    encoder:
+      name: mlp
+      config:
+        input_dim: 640
+        hidden_dims:
+          - 32
+        dropout: 0.1
+
+#encoder_decoder相关的参数
+encoder_decoder_config:
+  llm_config:
+    name: 'rnafm'
+    model_path: llm_ckpts/rnafm
+    embed_channel: 640
+  decoder:
+    name: 'mlp'
+    config:
+      n_classes: 4
+      encoder_hidden_dim: 32
+      mlp_num_layers: 3
+      mlp_dropout_p: 0.1
+      add_sigmoid: False
+  ckpt_path: 'results/fixed_encoder_decoder/model_separate_epoch_49.pt'
+
+model_config:
+  node_in_dim: [47, 4]   # latent_out_dim + 15
+  node_h_dim: [512, 128]
+  edge_in_dim: [32, 1]
+  edge_h_dim: [128, 1]
+  num_layers: 4
+  drop_rate: 0.1
+  dihedral_angle: True
+  num_trans_layer: 8
+  trans:
+    encoder_embed_dim: 512
+    encoder_attention_heads: 16
+    attention_dropout: 0.1
+    dropout: 0.1
+    encoder_ffn_embed_dim: 1024
+  latent_out_dim: 32
+
+train_config:
+  batch_size: 64
+  lr: 0.0001
+  wd: 0.01
+  num_workers: 8
+  output_dir: results/sold_uniform_step_abalation/sold_predict_val_step_10_recovery_0.0_ss_1.0_mfe_0.0_lddt_0.0/
+  ckpt_path: results/fixed_latent_diffusion/model_epoch_45.pt
+  max_train_epochs: 200
+  gradient_accumulate_every: 1
+  latent_transition_config:
+    num_steps: 100
+  ddim_num_steps:
+  sampler: true  # sampler setting for train batch_size > 1
+  sample_mode: time_batch
+  sample_num: 8        # 一个backbone在抽样的时候抽的数目
+  max_squared_res: 1500000
+  loss_config:
+    loss_seq:
+      weight: 1.0
+    loss_latent:
+      weight: 1.0
+  early_stopping:
+    patience: 10
+    monitor: val_recovery
+    min_boost_recovery: 0.005

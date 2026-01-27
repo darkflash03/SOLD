@@ -1,49 +1,106 @@
 # SOLD: Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model
 
-This repository is the **official implementation** of our AAAI 2026 paper
+[![AAAI 2026](https://img.shields.io/badge/AAAI-2026-blue.svg)](https://aaai.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 
-[//]: # (---)
+This is the official PyTorch implementation of the paper "Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model", accepted at AAAI 2026.
 
-[//]: # ()
-[//]: # (## 📄 Paper)
+## 📖 Abstract
 
-[//]: # (The paper is available here: )
+SOLD (Step-wise Optimization of Latent Diffusion Model) is a novel framework for RNA inverse folding, designing RNA sequences that fold into specific 3D structures.
 
-[//]: # ()
-[//]: # (---)
+While current diffusion methods excel at capturing sequence-structure interactions, they often struggle with non-differentiable objectives like Secondary Structure (SS) consistency and Minimum Free Energy (MFE). SOLD addresses this by:
+1.  Latent Diffusion: Using pre-trained RNA-FM embeddings to capture co-evolutionary patterns and compressing them into a latent space.
+2.  Step-wise RL Optimization: A reinforcement learning framework that optimizes single-step noise removal without sampling the full trajectory, allowing for efficient optimization of complex structural metrics.
 
-## 🧠 Overview
-SOLD introduces a step-wise optimization framework built upon **latent diffusion models** to enhance **structure-based RNA design**.  
-The method integrates **RNA-FM embeddings** with reinforcement learning to optimize secondary and tertiary structural objectives.
+## 📖SOLD Framework
+<p align="center">
+  <img src="assets/ldm.png" width="80%" alt="LDM Architecture">
+</p>
 
----
+<p align="center">
+  <img src="assets/sold.png" width="80%" alt="SOLD Framework">
+</p>
 
-## 🚧 Code Release
-The implementation and datasets will be released soon.
+## 📖 Data Preparation
+The training assumes a CSV format pointing to processed RNA structure data (PDBs).
 
-- [x] Paper accepted (AAAI 2026)  
-- [ ] Code cleanup and documentation  
-- [ ] Public release of training scripts and pretrained models  
+Source Data: Place your PDB files in a directory (e.g., data/rl_pdbs).
 
-Stay tuned!
+Metadata: Prepare CSV files (train_data.csv, valid_data.csv, test_data.csv) containing metadata and paths to the PDBs.
 
----
+Important: Update the pdb_data_dir and *_data_path entries in the .yaml configuration files to point to your local directories.
 
-[//]: # (## 📜 Citation)
 
-[//]: # (If you find this work useful, please cite:)
+##  🚀 Usage
+Stage 1: Encoder-Decoder Pre-training
+First, we train the MLP encoder/decoder to compress the high-dimensional RNA-FM embeddings into a latent representation.
+Modify encoder_decoder.yaml to set your data paths and output directory.
 
-[//]: # ()
-[//]: # (```bibtex)
+Run the training script:
 
-[//]: # (@inproceedings{si2026sold,)
+python train_encoder_decoder.py --config configs/encoder_decoder.yaml
 
-[//]: # (  title={Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model},)
+Output: Checkpoints will be saved to results/sold_encoder_decoder/.... Note the path of the best checkpoint (e.g., model_separate_epoch_XX.pt) for the next step.
 
-[//]: # (  author={Si, Qi and Liu, Xuyang and Wang, Penglei and Guo, Xin and Qi, Yuan and Cheng, Yuan},)
+Stage 2: Latent Diffusion Training
+Next, we train the Latent Diffusion Model (LDM) to generate the latent representations conditioned on the structure.
 
-[//]: # (  booktitle={AAAI Conference on Artificial Intelligence &#40;AAAI&#41;},)
+Open latent_diffusion.yaml.
+Crucial: Update encoder_decoder_config.ckpt_path and latent_compressed.model_path with the checkpoint path obtained from Stage 1.
 
-[//]: # (  year={2026})
+Run the training script:
 
-[//]: # (})
+python train_latent_diffusion.py --config configs/latent_diffusion.yaml
+
+Output: Checkpoints will be saved to results/sold_uniform_step_abalation/.... Note the path of the best checkpoint for the RL stage.
+
+
+Stage 3: RL Fine-tuning (SOLD)
+Finally, we apply the Step-wise Optimization of Latent Diffusion (SOLD) algorithm to fine-tune the model against specific structural metrics.
+
+Open rl_finetune.yaml.
+
+Crucial: Update train_config.ckpt_path with the LDM checkpoint from Stage 2.
+
+Ensure latent_compressed.model_path points to the Stage 1 checkpoint.
+
+Configure your rewards in rl_config:
+
+rl_config:
+  name: sold
+  ss_weight: 1.0   # Secondary Structure Reward
+  mfe_weight: 1.0  # Minimum Free Energy Reward
+  lddt_weight: 0.0 # LDDT Reward (requires RhoFold)
+  recovery_weight: 0.0
+
+Run the fine-tuning:
+
+python train_rl_finetune.py --config configs/rl_finetune.yaml
+
+
+## 🔧 Configuration
+The system is controlled via YAML files. Here are key parameters to adjust:
+
+Parameter,Description
+model_config.latent_out_dim,Dimension of the latent space (must match encoder).
+train_config.latent_transition_config.num_steps,Number of diffusion timesteps (T).
+
+Parameter,Description
+rl_config.name,"Algorithm to use (sold, ddpo, dpok)."
+rl_config.*_weight,"Weights for different reward objectives (MFE, SS, LDDT)."
+train_config.max_train_epochs,Number of RL epochs.
+train_config.batch_size,Training batch size.
+
+
+## 📜 Citation
+If you use this code or the SOLD framework in your research, please cite our AAAI 2026 paper:
+
+@inproceedings{si2026structure,
+  title={Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model},
+  author={Si, Qi and Liu, Xuyang and Wang, Penglei and Guo, Xin and Qi, Yuan and Cheng, Yuan},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  year={2026}
+}
+

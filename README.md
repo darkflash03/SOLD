@@ -39,8 +39,9 @@ First, we train the MLP encoder/decoder to compress the high-dimensional RNA-FM 
 Modify encoder_decoder.yaml to set your data paths and output directory.
 
 Run the training script:
-
+```bash
 python train_encoder_decoder.py --config configs/encoder_decoder.yaml
+```
 
 Output: Checkpoints will be saved to results/sold_encoder_decoder/.... Note the path of the best checkpoint (e.g., model_separate_epoch_XX.pt) for the next step.
 
@@ -51,9 +52,9 @@ Open latent_diffusion.yaml.
 Crucial: Update encoder_decoder_config.ckpt_path and latent_compressed.model_path with the checkpoint path obtained from Stage 1.
 
 Run the training script:
-
+```bash
 python train_latent_diffusion.py --config configs/latent_diffusion.yaml
-
+```
 Output: Checkpoints will be saved to results/sold_uniform_step_abalation/.... Note the path of the best checkpoint for the RL stage.
 
 
@@ -68,17 +69,19 @@ Ensure latent_compressed.model_path points to the Stage 1 checkpoint.
 
 Configure your rewards in rl_config:
 
+```bash
 rl_config:
   name: sold
   ss_weight: 1.0   # Secondary Structure Reward
   mfe_weight: 1.0  # Minimum Free Energy Reward
   lddt_weight: 0.0 # LDDT Reward (requires RhoFold)
   recovery_weight: 0.0
+```
 
 Run the fine-tuning:
-
+```bash
 python train_rl_finetune.py --config configs/rl_finetune.yaml
-
+```
 
 ## 🔧 Configuration
 The system is controlled via YAML files. Here are key parameters to adjust:
@@ -88,19 +91,22 @@ model_config.latent_out_dim,Dimension of the latent space (must match encoder).
 train_config.latent_transition_config.num_steps,Number of diffusion timesteps (T).
 
 Parameter,Description
+```
 rl_config.name,"Algorithm to use (sold, ddpo, dpok)."
 rl_config.*_weight,"Weights for different reward objectives (MFE, SS, LDDT)."
 train_config.max_train_epochs,Number of RL epochs.
 train_config.batch_size,Training batch size.
+```
 
 
 ## 📜 Citation
 If you use this code or the SOLD framework in your research, please cite our AAAI 2026 paper:
-
+```bibtex
 @inproceedings{si2026structure,
   title={Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model},
-  author={Si, Qi and Liu, Xuyang and Wang, Penglei and Guo, Xin and Qi, Yuan and Cheng, Yuan},
+  author={Qi Si and Xuyang Liu and Penglei Wang and Xin Guo and Yuan Qi and Yuan Cheng},
   booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
   year={2026}
 }
+```
 

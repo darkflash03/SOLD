@@ -100,13 +100,13 @@ train_config.batch_size,Training batch size.
 
 
 ## 📜 Citation
-If you use this code or the SOLD framework in your research, please cite our AAAI 2026 paper:
+If you use this code or the SOLD framework in your research, please cite our paper:
 ```bibtex
-@inproceedings{si2026structure,
+@article{si2026structure,
   title={Structure-based RNA Design by Step-wise Optimization of Latent Diffusion Model},
   author={Qi Si and Xuyang Liu and Penglei Wang and Xin Guo and Yuan Qi and Yuan Cheng},
-  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
-  year={2026}
+  journal={arXiv preprint arXiv:2601.19232},
+  year={2024}
 }
 ```
 
